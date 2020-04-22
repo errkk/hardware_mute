@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <BleKeyboard.h>
 
-BleKeyboard bleKeyboard;
+BleKeyboard bleKeyboard("Mute O Matic", "ERK", 100);
 
 #define MUTE 0
 #define UNMUTE 1
@@ -9,14 +9,24 @@ BleKeyboard bleKeyboard;
 const int PINS[2] = {33, 32};
 const int KEYS[2] = {0x97, 0x98};
 
+// Button states
 int buttonState[2] = {0, 0};
 int lastButtonState[2] = {0, 0};
 
 unsigned long lastDebounceTime[2] = {0, 0};
-unsigned long debounceDelay = 150;
+unsigned long debounceDelay = 50;
 
+// Pins
 const int BATT = A13;
 const int LED = 13;
+
+// Battery
+const float MAX_ADC = 4095;
+const float REF_VOLTAGE = 3.3;
+const float ADC_REF_VOLTAGE = 1.1;
+unsigned long lastBatteryCheck = 0;
+unsigned long batteryInterval = 30000;
+uint8_t batteryPercentage;
 
 
 void setup() {
@@ -40,7 +50,7 @@ void sendKeys(int idx) {
   bleKeyboard.press(KEYS[idx]);
   delay(50);
   bleKeyboard.releaseAll();
-  delay(50);
+  delay(300);
 }
 
 
@@ -60,9 +70,16 @@ void checkButton(int idx) {
 
 void checkBattery() {
   int reading = analogRead(BATT);
-  float voltage = map(reading, 0, 4095, 0.0, 4.7);
-  Serial.println(reading);
-  Serial.println(voltage);
+  float voltage = (reading / MAX_ADC) * 2.0 * REF_VOLTAGE * ADC_REF_VOLTAGE;
+  batteryPercentage = map(voltage, 3.7, 4.2, 20, 100);
+
+  if ((millis() - lastBatteryCheck) > batteryInterval) {
+    lastBatteryCheck = millis();
+    bleKeyboard.setBatteryLevel(batteryPercentage);
+    Serial.print("Battery: ");
+    Serial.print(batteryPercentage);
+    Serial.println("%");
+  }
 }
 
 void loop() {
@@ -70,6 +87,7 @@ void loop() {
     digitalWrite(LED, HIGH);
     checkButton(MUTE);
     checkButton(UNMUTE);
+    checkBattery();
   } else {
     digitalWrite(LED, LOW);
   }
