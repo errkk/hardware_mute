@@ -3,8 +3,8 @@
 
 BleKeyboard bleKeyboard("Mute O Matic", "ERK", 100);
 
-#define MUTE 0
-#define UNMUTE 1
+#define MUTE 1
+#define UNMUTE 0
 
 const int PINS[2] = {33, 32};
 const int KEYS[2] = {0x97, 0x98};
@@ -12,9 +12,11 @@ const int KEYS[2] = {0x97, 0x98};
 // Button states
 int buttonState[2] = {0, 0};
 int lastButtonState[2] = {0, 0};
+int buttonComplete[2] = {0, 0};
 
 unsigned long lastDebounceTime[2] = {0, 0};
 unsigned long debounceDelay = 50;
+String label[2] = {"Unmute", "Mute"};
 
 // Pins
 const int BATT = A13;
@@ -46,6 +48,7 @@ void setup() {
 }
 
 void sendKeys(int idx) {
+  Serial.println(label[idx]);
   bleKeyboard.press(KEY_LEFT_ALT);
   bleKeyboard.press(KEYS[idx]);
   delay(50);
@@ -55,17 +58,28 @@ void sendKeys(int idx) {
 
 
 void checkButton(int idx) {
-  int reading = touchRead(PINS[idx]) < 10;
+  int reading = touchRead(PINS[idx]) < 15;
 
-  if ((millis() - lastDebounceTime[idx]) > debounceDelay) {
-    if (reading > 0) {
-      Serial.print("press for ");
-      Serial.print(idx);
-      Serial.println();
-      sendKeys(idx);
-    }
+  // Has it changed? Due to noise or pressing
+  if (reading != lastButtonState[idx]) {
     lastDebounceTime[idx] = millis();
   }
+
+  // Has it been in this state long enough?
+  if ((millis() - lastDebounceTime[idx]) > debounceDelay) {
+
+    // Has the signal changed?
+    if (reading != buttonState[idx]) {
+      buttonState[idx] = reading;
+
+      // Is it a press
+      if (reading > 0) {
+        sendKeys(idx);
+        buttonComplete[idx] = true;
+      }
+    }
+  }
+  lastButtonState[idx] = reading;
 }
 
 void checkBattery() {
