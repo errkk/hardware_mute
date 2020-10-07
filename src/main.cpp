@@ -15,8 +15,16 @@ unsigned long lastDebounceTime;
 unsigned long debounceDelay = 50;
 
 // Pins
-const int LED_PIN = 13;
-const int BUTTON_PIN = 33;
+const int LED_PIN = PB4;
+const int BUTTON_PIN = PB3;
+// SDA - PB0
+// SCL - PB2
+
+//       __
+// PB5 -|  |- VCC
+// PB3 -|  |- PB2
+// PB4 -|  |- PB1
+// GND -|__|- PB0
 
 // GMeet
 const char z = 0x7A;
