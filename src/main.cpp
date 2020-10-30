@@ -1,6 +1,16 @@
 #include <Arduino.h>
 #include <BleKeyboard.h>
+#include <FastLED.h>
 
+// WS2812 config
+#define NUM_LEDS 1
+#define DATA_PIN 27
+
+// Define the array of leds
+CRGB leds[NUM_LEDS];
+const int BRIGHTNESS = 32;
+
+// Instanciate bluetooth HID
 BleKeyboard bleKeyboard("Mute O Matic", "ERK", 100);
 
 // Button states
@@ -9,6 +19,12 @@ int lastButtonState = 0;
 
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
+
+// Blinking indicator state
+unsigned long lastBlink = 0;
+unsigned long blinkDelay = 800;
+int ledState = 0;
+CRGB ledColour = CRGB::Red;
 
 // Pins
 const int LED_PIN = 13;
@@ -23,6 +39,9 @@ void setup() {
 
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
+
+  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed
+  FastLED.setBrightness(BRIGHTNESS);
 
   bleKeyboard.begin();
 
@@ -74,8 +93,35 @@ void checkButton() {
   lastButtonState = reading;
 }
 
+bool blinkDelayComplete(unsigned long currentMillis) {
+  return ((currentMillis - lastBlink) > blinkDelay);
+}
+
+void doBlinking() {
+  unsigned long currentMillis = millis();
+
+  if (blinkDelayComplete(currentMillis)) {
+    if (ledState == 0) {
+      leds[0] = ledColour;
+      ledState = 1;
+    } else {
+      leds[0] = CRGB::Black;
+      ledState = 0;
+    }
+    FastLED.show();
+
+    lastBlink = currentMillis;
+  }
+}
+
 void loop() {
   if(bleKeyboard.isConnected()) {
     checkButton();
+    ledColour = CRGB::Green;
+  } else {
+    ledColour = CRGB::Red;
   }
+
+  doBlinking();
 }
+
