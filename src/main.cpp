@@ -12,7 +12,7 @@ unsigned long debounceDelay = 50;
 
 // Pins
 const int LED_PIN = 13;
-const int BUTTON_PIN = 33;
+const int BUTTON_PIN = 39;
 
 // Meet
 const char z = 0x7A;
@@ -37,7 +37,7 @@ void setup() {
 }
 
 void toggle() {
-  digitalWrite(LED_EX_PIN, HIGH);
+  digitalWrite(LED_PIN, HIGH);
 
   bleKeyboard.press(KEY_LEFT_ALT);
   bleKeyboard.press(z);
