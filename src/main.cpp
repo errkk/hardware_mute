@@ -15,7 +15,7 @@ BleKeyboard bleKeyboard("Mute O Matic", "ERK", 100);
 
 // Button states
 #define debounce 20 // ms debounce period to prevent flickering when pressing or releasing the button
-#define holdTime 2000 // ms hold period: how long to wait for press+hold event
+#define holdTime 1000 // ms hold period: how long to wait for press+hold event
 
 int buttonVal = 0; // value read from button
 int buttonLast = 0; // buffered value of the button's previous state
